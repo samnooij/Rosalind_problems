@@ -1,3 +1,5 @@
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/samnooij/Rosalind_problems/master)
+
 # Rosalind_problems
 Scripts and notebooks used to solve exercises from rosalind.info
 
