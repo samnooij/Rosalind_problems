@@ -109,7 +109,7 @@
 #       
 # Sounds pretty straightforward. Let's see how to get that into code.
 
-# In[2]:
+# In[3]:
 
 
 def read_ids_from_file(input_file):
@@ -134,13 +134,13 @@ print(read_ids_from_file("data/Example_finding_a_protein_motif.txt"))
 
 # Then I want to download the fasta files belonging to these IDs, for which I can use the urllib module as suggested here: https://stackoverflow.com/questions/1393324/in-python-given-a-url-to-a-text-file-what-is-the-simplest-way-to-read-the-cont
 
-# In[5]:
+# In[6]:
 
 
 import urllib.request
 
 
-# In[28]:
+# In[5]:
 
 
 def fetch_uniprot_fasta(accession_id):
@@ -207,7 +207,7 @@ print(create_seq_record(name, sequence))
 # This is not strictly necessary, but I thought it was nice to have. 
 # Let's just continue with looking for motifs in the sequences.
 
-# In[38]:
+# In[8]:
 
 
 import regex
@@ -292,3 +292,207 @@ find_a_protein_motif("data/Example_finding_a_protein_motif.txt")
 
 find_a_protein_motif("data/rosalind_mprt.txt")
 
+
+# Apparently this was the wrong answer, unfortunately. Where could the error be?
+# 
+# What if I just try it again? Maybe it was just this set for whatever reason.
+
+# In[85]:
+
+
+find_a_protein_motif("data/rosalind_mprt2.txt")
+
+
+# No, that didn't do it. Then I have to find something else...
+# 
+# Let's make a test version to debug the problem. A function that shows all IDs, sequences, motifs, positions to help check if it all looks right.
+
+# In[1]:
+
+
+def find_a_protein_motif_debug(input_file):
+    """
+The complete program:
+ - read a file with accession IDs
+ - parse the associated amino acid sequences
+ - look for the motif
+ - if the motif exists:
+   - print accession ID and (start) positions
+    """
+    motif = "N[^P][S|T][^P]"
+    
+    accession_ids = read_ids_from_file(input_file)
+    
+    for accession_id in accession_ids:
+        print("ID: %s" % accession_id)
+        (fasta_id, sequence) = fetch_uniprot_fasta(accession_id)
+        
+        print("Fasta ID: %s\nSequence: %s" % (fasta_id, sequence))
+        
+        search_motif_positions_debug(sequence, motif)
+        
+    return(None)
+
+def search_motif_positions_debug(sequence, motif):
+    """
+Search a sequence for a given motif (as regex),
+and return position as list. Return False if the motif
+is absent from the sequence.
+    """
+    
+    print("Found motifs: %s" % regex.findall(r"%s" % motif, sequence))
+    
+    positions = [m.start() + 1 for m in regex.finditer(
+        r"%s" % motif, sequence)]
+    #Method thanks to moinudin: https://stackoverflow.com/a/4664889
+    
+    print("Motif positions: %s" % positions)
+    
+    if len(positions) > 0:
+        return(positions)
+    else:
+        return(False)
+
+
+# In[9]:
+
+
+find_a_protein_motif_debug("data/rosalind_mprt.txt")
+
+
+# When looking back at the example sequences, I found the problem! Consider these example answers:
+# 
+# **By Rosalind**
+# ```
+# B5ZC00
+# 85 118 142 306 395
+# P07204_TRBM_HUMAN
+# 47 115 116 382 409
+# P20840_SAG1_YEAST
+# 79 109 135 248 306 348 364 402 485 501 614
+# ```
+# 
+# **By my function**
+# ```
+# B5ZC00
+# 85 118 142 306 395
+# P07204_TRBM_HUMAN
+# 47 115 382 409
+# P20840_SAG1_YEAST
+# 79 109 135 248 306 348 364 402 485 501 614
+# ```
+# 
+# And look carefully at the list of positions given for "P07204_TRBM_HUMAN"...
+# 
+# ... see it yet?
+# 
+# The answer is...
+# 
+# `116` is missing from my function's output! It does not list overlapping matches. 
+# So I need to find a regex function that matches all overlapping matches too!
+# 
+# Perhaps take another look at: https://stackoverflow.com/a/18966891?
+
+# In[21]:
+
+
+#Let's take this sequence specifically and see how to fix my problem there!
+
+test_id = ">sp|P07204|TRBM_HUMAN Thrombomodulin OS=Homo sapiens OX=9606 GN=THBD PE=1 SV=2"
+
+test_sequence = "MLGVLVLGALALAGLGFPAPAEPQPGGSQCVEHDCFALYPGPATFLNASQICDGLRGHLMTVRSSVAADVISLLLNGDGGVGRRRLWIGLQLPPGCGDPKRLGPLRGFQWVTGDNNTSYSRWARLDLNGAPLCGPLCVAVSAAEATVPSEPIWEEQQCEVKADGFLCEFHFPATCRPLAVEPGAAAAAVSITYGTPFAARGADFQALPVGSSAAVAPLGLQLMCTAPPGAVQGHWAREAPGAWDCSVENGGCEHACNAIPGAPRCQCPAGAALQADGRSCTASATQSCNDLCEHFCVPNPDQPGSYSCMCETGYRLAADQHRCEDVDDCILEPSPCPQRCVNTQGGFECHCYPNYDLVDGECVEPVDPCFRANCEYQCQPLNQTSYLCVCAEGFAPIPHEPHRCQMFCNQTACPADCDPNTQASCECPEGYILDDGFICTDIDECENGGFCSGVCHNLPGTFECICGPDSALARHIGTDCDSGKVDGGDSGSGEPPPSPTPGSTLTPPAVGLVHSGLLIGISIASLCLVVALLALLCHLRKKQGAARAKMEYKCAAPSKEVVLQHVRTERTPQRL"
+
+test_matches = regex.findall(r"N[^P][S|T][^P]", test_sequence, overlapped=True)
+
+print([match for match in test_matches])
+
+test_iters = regex.finditer(r"N[^P][S|T][^P]", test_sequence, overlapped=True)
+
+print([match.start() + 1 for match in test_iters])
+
+
+# It looks like I was missing only the `overlapped=True` part. If I add that, I should be good.
+
+# In[22]:
+
+
+def search_motif_positions2(sequence, motif):
+    """
+Search a sequence for a given motif (as regex),
+and return position as list. Return False if the motif
+is absent from the sequence.
+    """
+    positions = [m.start() + 1 for m in regex.finditer(
+        r"%s" % motif, sequence, overlapped = True)]
+    #Method thanks to moinudin: https://stackoverflow.com/a/4664889
+    
+    if len(positions) > 0:
+        return(positions)
+    else:
+        return(False)
+
+
+# In[23]:
+
+
+def find_a_protein_motif2(input_file):
+    """
+The complete program:
+ - read a file with accession IDs
+ - parse the associated amino acid sequences
+ - look for the motif
+ - if the motif exists:
+   - print accession ID and (start) positions
+    """
+    motif = "N[^P][S|T][^P]"
+    
+    accession_ids = read_ids_from_file(input_file)
+    
+    for accession_id in accession_ids:
+        (fasta_id, sequence) = fetch_uniprot_fasta(accession_id)
+        
+        if search_motif_positions2(sequence, motif):
+            print("%s\n%s" % (accession_id, " ".join(map(str, search_motif_positions2(sequence, motif)))))
+        else:
+            pass
+        
+    return(None)
+
+
+# So now these should give different results than before if I use the same input files. Let's see how that goes.
+
+# In[24]:
+
+
+find_a_protein_motif2("data/Example_finding_a_protein_motif.txt")
+
+
+# So far so good...
+
+# In[25]:
+
+
+find_a_protein_motif2("data/rosalind_mprt.txt")
+
+
+# Indeed there is a minor difference here! Look at the positions `168` and `169` for `P01047_KNL2_BOVIN`.
+
+# In[26]:
+
+
+find_a_protein_motif2("data/rosalind_mprt2.txt")
+
+
+# So this one should differ in the positions for `P02974_PMM1_NEIGO`: `68` has been added compared to the previous attempt.
+# 
+# Now I feel I am ready for the challenge again. Let's do it!
+
+# In[27]:
+
+
+find_a_protein_motif2("data/rosalind_mprt3.txt")
+
+
+# ## Success!!
+# 
+# I did it! Indeed the overlapping motifs were what I missed first and what has been fixed in this second version.
