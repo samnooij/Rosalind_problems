@@ -26,7 +26,7 @@
 # 
 # 2. Find palindromes! (includes: read sequence, check reverse complements of substrings, keep positions)
 
-# In[2]:
+# In[4]:
 
 
 from Bio.Seq import Seq #for working with Seq objects and making reverse complements
@@ -34,7 +34,7 @@ from Bio import SeqIO #for reading fasta files
 from pathlib import Path #for working with files in general
 
 
-# In[21]:
+# In[5]:
 
 
 #Set minimum and maximum lengths of palindrome halves
@@ -42,7 +42,7 @@ min_length = 2
 max_length = 6
 
 
-# In[3]:
+# In[6]:
 
 
 def read_fasta_file(input_file):
@@ -58,7 +58,7 @@ Given an input fasta file, read the fasta record (ID and sequence).
     return name, sequence
 
 
-# In[4]:
+# In[7]:
 
 
 example_file = Path("data/Example_Locating_restriction_sites.fasta")
@@ -313,14 +313,121 @@ palindromes = find_DNA_palindromes(test_sequence)
 print_palindromes(palindromes)
 
 
-# In[35]:
+# Apparently, this answer is wrong. Let's check where it may have gone wrong...
+
+# In[38]:
 
 
-palindromes
+print("Length of test sequence: %i" % len(test_sequence))
 
 
-# In[36]:
+# In[39]:
 
 
-test_sequence
+find_mistakes = find_DNA_palindromes(test_sequence, debug = True)
+
+
+# It looks alright at first glance... What may have gone wrong??
+# 
+# Ah, I think I get it! If a position has multiple palindromes, I can only report one because I'm using a dictionary. And dictionaries may only have each key once. So to be able to report multiple palindromes on the same position, I have to save them in a different way. E.g. in a list!
+
+# In[27]:
+
+
+def find_DNA_palindromes(sequence, debug=False):
+    """
+Given a DNA sequence, find all palindromes of lengths 4-12
+and report their position and length, and include the sequence
+for easier debugging.
+
+Save palindromes as a list, using positions, length and
+sequence as values (as tuple).
+    """
+    #initialise empty list to be filled with the palindromes
+    palindrome_list = []
+    
+    #loop over the complete sequence, by positions
+    for position in range(len(sequence) + 1):
+        #then for each position, check for potential palindromes
+        for length in range(min_length, max_length + 1):
+            
+            if len(sequence[position:position+length]) == length:
+                #Check if the substring to check is as long as intended,
+                # i.e. does not 'go over' the end of the sequence
+                potential_forward_half = sequence[position:position+length]
+            else:
+                #If it does, break (stop checking)
+                break
+                
+            if len(sequence[position+length:position+(length*2)]) == length:
+                potential_reverse_half = sequence[position+length:position+(length*2)]
+            else:
+                break
+            
+            if debug:
+                print("Position: %i, Length: %i, forward: %s, reverse: %s" % (
+                    position + 1,
+                    length * 2,
+                    potential_forward_half,
+                    potential_reverse_half
+                )
+                     )
+            
+            
+            if potential_forward_half == potential_reverse_half.reverse_complement():
+                #This is a palindrome!
+                if debug:
+                    print("%s and %s appear to form a palindrome!" % (
+                    potential_forward_half,
+                    potential_reverse_half
+                    )
+                         )
+                
+                palindrome_list.append((
+                    position + 1, #add 1 to compensate for Python's 0-based counting
+                    2 * length, #multiply by 2 to give the length of the complete palindrome
+                    potential_forward_half + potential_reverse_half
+                ))
+            else:
+                pass
+            
+    return palindrome_list
+
+
+# In[1]:
+
+
+def print_palindromes_from_list(palindrome_list):
+    """
+Given a list with palindrome positions, lengths and
+sequences, print the positions and lengths separated by a whitespace,
+one pair per line.
+    """
+    for palindrome in palindrome_list:
+        print("%s %s" % (
+            palindrome[0],
+        palindrome[1]
+        ))
+        
+    return None
+
+
+# In[29]:
+
+
+print_palindromes_from_list(find_DNA_palindromes(example_sequence))
+
+
+# Alright. Now that that seems to work, let's try another test!
+
+# In[30]:
+
+
+new_test_file = Path("data/rosalind_revp2.txt")
+
+(new_test_name, new_test_sequence) = read_fasta_file(new_test_file)
+
+palindromes = find_DNA_palindromes(new_test_sequence)
+
+print_palindromes_from_list(palindromes)
 
