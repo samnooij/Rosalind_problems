@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Enumerating k-mers lexographically, from [Rosalind.info](https://www.rosalind.info)
+# # Enumerating k-mers lexicographically, from [Rosalind.info](https://www.rosalind.info)
 # 
 # (Specific exercise at: http://rosalind.info/problems/lexf/)
 # 
@@ -57,7 +57,7 @@ example_alphabet, example_length)
 
 # Alright, that works. Now let's see if I can uses the `itertools.permutations()` function to make some combinations.
 
-# In[7]:
+# In[4]:
 
 
 print(list(itertools.permutations(example_alphabet, example_length)))
@@ -65,7 +65,7 @@ print(list(itertools.permutations(example_alphabet, example_length)))
 
 # Right, that seems fine. Now I need to convert this list of tuples into separate lines of strings...
 
-# In[8]:
+# In[5]:
 
 
 for letter_combination in list(itertools.permutations(example_alphabet, example_length)):
@@ -81,7 +81,7 @@ for letter_combination in list(itertools.permutations(example_alphabet, example_
 # 
 # I will for now just go with whatever is provided and see how that works out...
 
-# In[9]:
+# In[6]:
 
 
 test_file = "data/rosalind_lexf.txt"
@@ -96,7 +96,7 @@ for string in list(itertools.permutations(test_alphabet, test_length)):
 # 
 # Let's check what the input was:
 
-# In[10]:
+# In[7]:
 
 
 print("Test alphabet: %s\nTest length: %i" %(
@@ -109,7 +109,7 @@ test_alphabet, test_length)
 # Oh yes, I see now that my example went wrong too. The answer I got is too short.  
 # I miss all the repeats! Now how can I include those, too...?
 
-# In[13]:
+# In[8]:
 
 
 for string in list(itertools.combinations_with_replacement(test_alphabet, test_length)):
@@ -120,7 +120,7 @@ for string in list(itertools.combinations_with_replacement(test_alphabet, test_l
 # 
 # Let's try the exercise again.
 
-# In[14]:
+# In[9]:
 
 
 second_test_file = "data/rosalind_lexf2.txt"
@@ -129,5 +129,49 @@ second_test_file = "data/rosalind_lexf2.txt"
 
 for string in list(itertools.combinations_with_replacement(
     second_test_alphabet, second_test_length)):
+    print("".join(list(string)))
+
+
+# Oh. This is still wrong.
+# 
+# I thought this would be easy, but it turns out a bit more complicated...
+
+# In[10]:
+
+
+print("Second test alphabet: %s\nSecond test length: %i" %(
+second_test_alphabet, second_test_length)
+     )
+
+
+# Oh, I see... When the 'A' has been used, it is no longer used in combinations with 'B', and so on.
+# 
+# So I need even more repeats than this function does by default.
+# 
+# (Check [this page](https://docs.python.org/3/library/itertools.html#itertools.combinations_with_replacement) for more info on the functions I tried so far.)
+# 
+# I will get back to this exercise and try it again later.
+
+# Update: it looks like I need the `product()` function from itertools! (Also see: https://docs.python.org/2/library/itertools.html#itertools.product)
+
+# In[18]:
+
+
+for string in list(itertools.product(
+    second_test_alphabet, repeat=second_test_length)):
+    print("".join(list(string)))
+
+
+# So now that I think I know how to do it, let's try it the third time:
+
+# In[19]:
+
+
+third_test_file = "data/rosalind_lexf3.txt"
+
+(third_test_alphabet, third_test_length) = read_alphabet_and_length(third_test_file)
+
+for string in list(itertools.product(
+    third_test_alphabet, repeat=third_test_length)):
     print("".join(list(string)))
 
