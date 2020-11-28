@@ -23,6 +23,8 @@ These scripts will then use the [Black](https://github.com/psf/black) code
 format, and functions will be tested using `pytest`, which can also be
 implemented as automated test on GitHub (with Actions).
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) ![Python application](https://github.com/samnooij/Rosalind_problems/workflows/Python%20application/badge.svg)
+
 Later on, I might add documentation (of the functions) using 
 [Sphinx](https://www.sphinx-doc.org/en/master/) and 
 [readthedocs](https://readthedocs.org/).  
