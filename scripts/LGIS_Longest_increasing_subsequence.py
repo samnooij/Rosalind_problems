@@ -3,6 +3,7 @@
 import argparse
 from bisect import bisect_left, bisect_right
 from functools import cmp_to_key
+from pathlib import Path
 
 
 def parse_arguments():
@@ -21,6 +22,15 @@ that is, input and output file.
         dest="input",
         required=True,
         help="Input file with lenth and sequence of integers.",
+    )
+
+    required.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        dest="output",
+        required=True,
+        help="Output file to which results are written.",
     )
 
     (args, extra_args) = parser.parse_known_args()
@@ -115,6 +125,39 @@ indices : list, optional
     return list(indices) if index else [seq[i] for i in indices]
 
 
+def write_lists_as_separate_lines(lists, output_file):
+    """
+Write lists to a text file on separate lines. For example,
+the lists ["1", "2", "3"] and ["another", "list"] are
+written to the file as:
+1 2 3
+another list
+
+Parameters
+----------
+lists: a list of lists
+  A `list` of lists that are written to a file.
+output_file: str
+  The name of the output file to which the lists are written.
+
+Returns
+-------
+None
+  The function only writes lists to a text file, nothing is returned.
+    """
+    assert type(lists) == type([])
+    # Make sure lists is of type 'list'
+
+    with open(output_file, "w") as write_file:
+        for l in lists:
+            assert type(l) == type([])
+            # Make sure the elements in lists are also lists
+
+            write_file.write("%s\n" % " ".join(map(str, l)))
+
+    return None
+
+
 def main():
     """
     Main execution of the script.
@@ -127,6 +170,29 @@ def main():
     )
     decreasing_subsequence = longest_subsequence(
         seq=sequence, mode="strictly", order="decreasing"
+    )
+
+    # Try and create the folder provided as output argument if it does not exist yet:
+    try:
+        output_path = Path(arguments.output).parent
+
+        # If the path does not exist yet:
+        if not output_path.is_dir():
+            # Create it.
+            output_path.mkdir()
+        else:
+            pass
+
+    except:
+        print(
+            "There seems to be a problem with the output argument you provided: %s\n"
+            "Please provide an existing directory or a new directory without subdirectories."
+            % arguments.output
+        )
+        return 1
+
+    write_lists_as_separate_lines(
+        [increasing_subsequence, decreasing_subsequence], arguments.output
     )
 
     return 0
