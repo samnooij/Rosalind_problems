@@ -52,6 +52,14 @@ read the length and sequence as variables (integer and list).
         length = int(read_file.readline())
         sequence = list(read_file.readline().split())
 
+    # Try and make the elements in the sequence into integers.
+    try:
+        sequence = list(map(int, sequence))
+
+    # Or leave them as strings if they are no numbers.
+    except ValueError:
+        pass
+
     return (length, sequence)
 
 

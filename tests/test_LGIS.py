@@ -16,12 +16,12 @@ test_sequence = ["5", "1", "4", "2", "3"]
 
 
 def test_read_length_and_sequence():
-    with open("data/Example_longest_increasing_subsequence.txt", "r") as read_file:
-        length = int(read_file.readline())
-        sequence = list(read_file.readline().split())
+    (length, sequence) = read_length_and_sequence(
+        input_file="data/Example_longest_increasing_subsequence.txt"
+    )
 
     assert length == 5
-    assert sequence == test_sequence
+    assert sequence == list(map(int, test_sequence))
 
 
 def test_longest_subsequence():
