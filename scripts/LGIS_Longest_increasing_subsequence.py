@@ -11,7 +11,11 @@ def parse_arguments():
 Parse arguments from the commandline,
 that is, input and output file.
     """
-    parser = argparse.ArgumentParser(description="Read input parameters.")
+    parser = argparse.ArgumentParser(
+        description="Calculates the longest increasing and "
+        "decreasing substrings from a string provided as input file, and write the answer "
+        "to a text file."
+    )
 
     required = parser.add_argument_group("Required arguments")
 
@@ -21,7 +25,7 @@ that is, input and output file.
         type=str,
         dest="input",
         required=True,
-        help="Input file with lenth and sequence of integers.",
+        help="Input file with length and sequence (of integers) on two separate lines.",
     )
 
     required.add_argument(
