@@ -135,6 +135,12 @@ contig : contiguous sequence
     # Also, when this script works, I would like to implement a version that
     # takes into account reverse complements of sequences as well.
     # (Not particularly useful in this exercise, but may come in handy some time...)
+    # After that, it may be nice to add a version that does not require
+    # all sequences to have at least some overlap and just returns multiple
+    # sequences if some sequences share no overlapping parts.
+    # (This should probably also use a cut-off for overlap length:
+    # overlaps of length 1 are not that hard to find, but are often meaningless
+    # when applied to actual genomics data.)
 
 
 def main():

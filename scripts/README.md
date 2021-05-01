@@ -34,3 +34,9 @@ Not because I think I can make a faster, more optimised solution,
 but because I want to learn how to do this and understand
 exactly how the code works. That way, I might also be able to easily add
 alternative functionality.
+
+_Suggested bonus functionality:_
+ 1. handle reverse complement sequences
+ 2. set a minimum length for overlaps
+ 3. handle datasets with not exclusively overlapping sequences
+    (return multiple sequences)
