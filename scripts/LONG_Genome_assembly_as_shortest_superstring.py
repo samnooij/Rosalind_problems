@@ -99,23 +99,108 @@ contig : contiguous sequence
   A `str` with shortest overlapping sequence (contig).
     """
 
-    def list_5_ends(sequence):
+    def list_left_ends(sequence):
         """
-        List all possible 5' (left) ends for a given sequence,
+        List all possible left (probably 5') ends for a given sequence,
         from long to short.
         """
         return [sequence[0:position] for position in range(len(sequence) + 1, 0, -1)]
 
-    def list_3_ends(sequence):
+    def list_right_ends(sequence):
         """
-        List all possible 3' (right) ends for a given sequence.
+        List all possible right (probably 3') ends for a given sequence.
         """
         return [
             sequence[position : len(sequence)] for position in range(0, len(sequence))
         ]
 
-    for sequence in seq_dict.values():
-        right_ends = list_5_ends(sequence)
+    seq_dict_copy = seq_dict.copy()
+
+    current_id = list(seq_dict_copy.keys())[0]
+    current_sequence = seq_dict_copy.pop(current_id)
+
+    # First, check if there are any other sequences,
+    if len(seq_dict_copy) == 0:
+        # If there are none, return the current sequence
+        return current_sequence
+
+    # then check if there is a duplicate
+    elif current_sequence in seq_dict_copy.values():
+        # And if there is, restart the process
+        # excluding the duplicate 'current_sequence'
+        print("There is a duplicate of %s" % (current_sequence))
+
+        return find_overlaps(seq_dict_copy)
+
+    else:
+        # If there is no duplicate, continue by looking
+        # for duplicates as substrings: is the current sequence
+        # a substring of a longer sequence in the dictionary,
+        # or is any of the sequences in the dictionary a
+        # subsequence of the current sequence?
+        for name, sequence in seq_dict_copy.items():
+            if len(sequence) > len(current_sequence):
+                # If the sequence from the dictionary is longer,
+                # current_sequence may be a substring
+                if current_sequence in sequence:
+                    print("%s is a subsequence of %s" % (current_sequence, sequence))
+
+                    return find_overlaps(seq_dict_copy)
+                    # Continue without current sequence
+
+            elif len(sequence) < len(current_sequence):
+                # Or if the current sequence is longer,
+                # the sequence from the dictionary may be
+                # a substring of the current.
+                if sequence in current_sequence:
+                    print("%s is a substring of %s" % (sequence, current_sequence))
+                    del seq_dict_copy[name]  # Remove the shorter sequence
+                    seq_dict_copy.update({"new_sequence": current_sequence})
+                    return find_overlaps(seq_dict_copy)
+
+            else:
+                # If neither is longer, neither can be a substring
+                # of the other.
+                pass
+
+        # Finally, look for overlaps in both left and right (
+        # 5' and 3') ends.
+
+        current_left_ends = list_left_ends(current_sequence)
+        current_right_ends = list_right_ends(current_sequence)
+
+        for index in range(1, len(current_sequence)):
+            left_end = current_left_ends[index]
+            right_end = current_right_ends[index]
+            # For each left end and right end,
+
+            for sequence in seq_dict_copy.values():
+                if sequence.endswith(left_end):
+                    # If another sequence ends with the current
+                    # sequence's left end, there is an overlap
+                    print("%s and %s overlap!" % (sequence, current_sequence))
+                    merged_sequence = current_sequence[len(left_end) :] + sequence
+
+                    print("New sequence: %s" % merged_sequence)
+                    break  # It is assumed there is only one longest match
+                    # in the dataset, so stop looking further.
+
+                elif sequence.startswith(right_end):
+                    # And if another sequence ends with the
+                    # current sequence's right end, there is an overap
+                    print("%s and %s overlap!" % (current_sequence, sequence))
+                    merged_sequence = current_sequence[: -len(right_end)] + sequence
+
+                    print("New sequence: %s" % merged_sequence)
+                    break  # It is assumed there is only one longest match
+                    # in the dataset, so stop looking further.
+
+                else:
+                    pass
+
+    seq_dict_copy.update({"merged_sequence": merged_sequence})
+
+    return find_overlaps(seq_dict_copy)
 
     # This is the part from which to continue the work.
     # I suggest to start by adding the following functions:
@@ -151,10 +236,24 @@ def main():
 
     sequence_dictionary = read_sequences(arguments.input)
 
-    breakpoint()
+    shortest_supersequence = find_overlaps(sequence_dictionary)
+
+    print("-----\nThe shortest supersequence is:", shortest_supersequence)
 
     return 0
 
 
 if __name__ == "__main__":
     exit(main())
+
+## Minimum required features:
+# 1. Compare ends of sequences, long to short
+#  --> merge to first = longest match, there should be only one
+# 2.
+#
+## Bonus features for extended usability:
+# 1. Collapse all duplicates
+#  --> include duplicates that are subsequences of longer sequences
+# 2. Continue searching after an end has been matched: there may be multiple options
+#  --> in case of multiple options, try all or stop extending?
+# 3. Include reverse complements as option
