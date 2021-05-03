@@ -1,4 +1,7 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
+
+# Requires Python 3.7+ to work with ordered dictionaries!
+# https://docs.python.org/3/library/stdtypes.html#mapping-types-dict
 
 # A script to find the shortest superstring (contig) for
 # a number of DNA sequences provided as fasta file.
@@ -196,7 +199,7 @@ contig : contiguous sequence
     seq_dict_copy = seq_dict.copy()
 
     # (1) Take the first element:
-    current_id = list(seq_dict_copy.keys())[0]
+    current_id = list(seq_dict_copy)[0]
     current_sequence = seq_dict_copy.pop(current_id)
 
     # (2) If there are no other sequences:
@@ -236,10 +239,12 @@ contig : contiguous sequence
                     highlight_substring(sequence, current_sequence)
 
                     del seq_dict_copy[name]  # Remove the shorter sequence
-                    seq_dict_copy.update({name + "-deduplicated": current_sequence})
-                    # Add the current sequence back in
 
-                    return find_overlaps(seq_dict_copy)
+                    new_dict = {name + "-deduplicated": current_sequence}
+                    new_dict.update(seq_dict_copy)
+                    # Add the current sequence at the start of a new dictionary
+
+                    return find_overlaps(new_dict)
                     # Start from (1) without the shorter duplicate
 
             else:
@@ -278,12 +283,13 @@ contig : contiguous sequence
 
                         print("New sequence: %s\n" % merged_sequence)
 
-                        seq_dict_copy.update({name + "-merged": merged_sequence})
-                        # Add the merged sequence
+                        new_dict = {name + "-merged": merged_sequence}
+                        new_dict.update(seq_dict_copy)
+                        # Add the merged sequence at the start of a new dictionary
 
-                        del seq_dict_copy[name]  # Remove the matched sequence
+                        del new_dict[name]  # Remove the matched sequence
 
-                        return find_overlaps(seq_dict_copy)
+                        return find_overlaps(new_dict)
                         # Start from (1) with the two sequences merged.
 
                     # (8b) If the right end matches the other sequence:
@@ -293,12 +299,13 @@ contig : contiguous sequence
 
                         print("New sequence: %s\n" % merged_sequence)
 
-                        seq_dict_copy.update({name + "-merged": merged_sequence})
-                        # Add the merged sequence
+                        new_dict = {name + "-merged": merged_sequence}
+                        new_dict.update(seq_dict_copy)
+                        # Add the merged sequence at the start of a new dictionary
 
-                        del seq_dict_copy[name]  # Remove the matched sequence
+                        del new_dict[name]  # Remove the matched sequence
 
-                        return find_overlaps(seq_dict_copy)
+                        return find_overlaps(new_dict)
                         # Start from (1) with the two sequences merged.
 
                     else:
@@ -316,7 +323,7 @@ contig : contiguous sequence
             % current_sequence
         )
 
-        # Put the sequence back in...
+        # Put the sequence at the end of the dictionary...
         print("Retrying with next sequence...")
         seq_dict_copy.update({current_id: current_sequence})
 
