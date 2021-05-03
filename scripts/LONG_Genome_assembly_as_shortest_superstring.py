@@ -193,8 +193,6 @@ contig : contiguous sequence
             sequence[position : len(sequence)] for position in range(0, len(sequence))
         ]
 
-    print("%s sequences to go!" % len(seq_dict))
-
     seq_dict_copy = seq_dict.copy()
 
     # (1) Take the first element:
@@ -264,10 +262,10 @@ contig : contiguous sequence
             # (6) Compare to each other sequence:
             for name, sequence in seq_dict_copy.items():
                 # (7) If the overlap part is at least
-                # half as long as the sequences:
+                # half as long as either of the sequences:
                 if (
                     len(left_end) >= len(sequence) / 2
-                    and len(left_end) >= len(current_sequence) / 2
+                    or len(left_end) >= len(current_sequence) / 2
                 ):
                     # Left and right should be equally long, so check only one.
                     # If the overlap is at least half as long as both sequences,
@@ -280,10 +278,10 @@ contig : contiguous sequence
 
                         print("New sequence: %s\n" % merged_sequence)
 
-                        del seq_dict_copy[name]  # Remove the matched sequence
-
                         seq_dict_copy.update({name + "-merged": merged_sequence})
-                        # Add the merged sequence back in
+                        # Add the merged sequence
+
+                        del seq_dict_copy[name]  # Remove the matched sequence
 
                         return find_overlaps(seq_dict_copy)
                         # Start from (1) with the two sequences merged.
@@ -295,10 +293,10 @@ contig : contiguous sequence
 
                         print("New sequence: %s\n" % merged_sequence)
 
-                        del seq_dict_copy[name]  # Remove the matched sequence
-
                         seq_dict_copy.update({name + "-merged": merged_sequence})
-                        # Add the merged sequence back in
+                        # Add the merged sequence
+
+                        del seq_dict_copy[name]  # Remove the matched sequence
 
                         return find_overlaps(seq_dict_copy)
                         # Start from (1) with the two sequences merged.
@@ -320,9 +318,7 @@ contig : contiguous sequence
 
         # Put the sequence back in...
         print("Retrying with next sequence...")
-        seq_dict_copy.update(
-            {"merged_sequence" + str(len(seq_dict_copy.keys())): current_sequence}
-        )
+        seq_dict_copy.update({current_id: current_sequence})
 
     # ...and start from (1)
     return find_overlaps(seq_dict_copy)
