@@ -214,7 +214,7 @@ contig : contiguous sequence
                     highlight_substring(sequence, current_sequence)
 
                     del seq_dict_copy[name]  # Remove the shorter sequence
-                    seq_dict_copy.update({"new_sequence": current_sequence})
+                    seq_dict_copy.update({name + "-deduplicated": current_sequence})
                     return find_overlaps(seq_dict_copy)
 
             else:
@@ -241,7 +241,9 @@ contig : contiguous sequence
                     merged_sequence = current_sequence[len(left_end) :] + sequence
 
                     print("New sequence: %s\n" % merged_sequence)
-                    break  # It is assumed there is only one longest match
+                    seq_dict_copy.update({name + "-merged": merged_sequence})
+                    return find_overlaps(seq_dict_copy)
+                    # It is assumed there is only one longest match
                     # in the dataset, so stop looking further.
 
                 elif sequence.startswith(right_end):
@@ -251,7 +253,9 @@ contig : contiguous sequence
                     merged_sequence = current_sequence[: -len(right_end)] + sequence
 
                     print("New sequence: %s\n" % merged_sequence)
-                    break  # It is assumed there is only one longest match
+                    seq_dict_copy.update({name + "-merged": merged_sequence})
+                    return find_overlaps(seq_dict_copy)
+                    # It is assumed there is only one longest match
                     # in the dataset, so stop looking further.
 
                 else:
