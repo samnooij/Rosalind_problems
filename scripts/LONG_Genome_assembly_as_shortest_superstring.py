@@ -122,7 +122,7 @@ contig : contiguous sequence
         """
         length = len(shorter)
         start = longer.index(shorter)
-        end = start + len(shorter)
+        end = start + length
 
         print("%s\nis a subsequence of" % shorter)
         print(
@@ -132,6 +132,29 @@ contig : contiguous sequence
             + longer[start:end]
             + font.reset
             + longer[end:]
+        )
+
+    def highlight_overlap(left, right, length):
+        """
+        Highlight the overlapping part between a left and
+        right sequence in bold red print.
+        """
+        left_start = len(left) - length
+
+        print(
+            "Sequences:\n"
+            + left[:left_start]
+            + font.bold
+            + font.red
+            + left[left_start:]
+            + font.reset
+            + " and "
+            + font.bold
+            + font.red
+            + right[:length]
+            + font.reset
+            + right[length:]
+            + " overlap!"
         )
 
     def list_left_ends(sequence):
@@ -210,24 +233,24 @@ contig : contiguous sequence
             right_end = current_right_ends[index]
             # For each left end and right end,
 
-            for name, sequence in seq_dict.items():
+            for name, sequence in seq_dict_copy.items():
                 if sequence.endswith(left_end):
                     # If another sequence ends with the current
                     # sequence's left end, there is an overlap
-                    print("%s and %s overlap!" % (sequence, current_sequence))
+                    highlight_overlap(sequence, current_sequence, len(left_end))
                     merged_sequence = current_sequence[len(left_end) :] + sequence
 
-                    print("New sequence: %s" % merged_sequence)
+                    print("New sequence: %s\n" % merged_sequence)
                     break  # It is assumed there is only one longest match
                     # in the dataset, so stop looking further.
 
                 elif sequence.startswith(right_end):
                     # And if another sequence ends with the
                     # current sequence's right end, there is an overap
-                    print("%s and %s overlap!" % (current_sequence, sequence))
+                    highlight_overlap(current_sequence, sequence, len(right_end))
                     merged_sequence = current_sequence[: -len(right_end)] + sequence
 
-                    print("New sequence: %s" % merged_sequence)
+                    print("New sequence: %s\n" % merged_sequence)
                     break  # It is assumed there is only one longest match
                     # in the dataset, so stop looking further.
 
