@@ -38,5 +38,12 @@ alternative functionality.
 _Suggested bonus functionality:_
  1. handle reverse complement sequences
  2. set a minimum length for overlaps
+    (can be a whole number or fraction,
+    default = 0.5, 0 means complete overlap (deduplication))
  3. handle datasets with not exclusively overlapping sequences
-    (return multiple sequences)
+    (return multiple sequences; this can be done by checking the order
+    of the dictionary and/or the suffixes of sequence IDs)
+ 4. optional: set verbosity of debug messages
+    (e.g. by default (1) print only how many sequences are left,
+    and show overlaps with verbosity (2), `-v 0` or `--silent`
+    suppresses all terminal output)
