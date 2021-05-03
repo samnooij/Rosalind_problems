@@ -138,7 +138,7 @@ contig : contiguous sequence
         # a substring of a longer sequence in the dictionary,
         # or is any of the sequences in the dictionary a
         # subsequence of the current sequence?
-        for name, sequence in seq_dict_copy.items():
+        for name, sequence in seq_dict.items():
             if len(sequence) > len(current_sequence):
                 # If the sequence from the dictionary is longer,
                 # current_sequence may be a substring
@@ -154,6 +154,7 @@ contig : contiguous sequence
                 # a substring of the current.
                 if sequence in current_sequence:
                     print("%s is a substring of %s" % (sequence, current_sequence))
+
                     del seq_dict_copy[name]  # Remove the shorter sequence
                     seq_dict_copy.update({"new_sequence": current_sequence})
                     return find_overlaps(seq_dict_copy)
@@ -174,7 +175,7 @@ contig : contiguous sequence
             right_end = current_right_ends[index]
             # For each left end and right end,
 
-            for sequence in seq_dict_copy.values():
+            for name, sequence in seq_dict.items():
                 if sequence.endswith(left_end):
                     # If another sequence ends with the current
                     # sequence's left end, there is an overlap
@@ -196,23 +197,16 @@ contig : contiguous sequence
                     # in the dataset, so stop looking further.
 
                 else:
-                    pass
+                    # If the sequence is not a duplicate and has no overlap,
+                    # throw it out (for now):
+                    # print(sorted(list(seq_dict_copy.keys())))
+                    # del seq_dict_copy[name]
+                    merged_sequence = current_sequence
 
     seq_dict_copy.update({"merged_sequence": merged_sequence})
 
     return find_overlaps(seq_dict_copy)
 
-    # This is the part from which to continue the work.
-    # I suggest to start by adding the following functions:
-    # 1. see if the first sequence is identical to any other:
-    #   if so, merge
-    # 2. see if the first sequence is identical to any 5' or 3' end:
-    #   if so, merge
-    # 3. continue with matching the 5' end to all 3' ends of the same length,
-    #    and then the 3' end to all other 5' ends:
-    #    do this in order from long to short and merge when one has been found
-    # experiment with these steps until a satisfactory algorithm has been made.
-    #
     # When finished, include test cases that also show how the script works:
     # for example, start by matching sequences 'A' and 'A', then 'AC' and 'CG',
     # add in some interesting but simple cases and slowly increase complexity.
