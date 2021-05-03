@@ -279,7 +279,7 @@ contig : contiguous sequence
                     # (8a) If the left end matches the other sequence:
                     if sequence.endswith(left_end):
                         highlight_overlap(sequence, current_sequence, len(left_end))
-                        merged_sequence = current_sequence[len(left_end) :] + sequence
+                        merged_sequence = sequence + current_sequence[len(left_end) :]
 
                         print("New sequence: %s\n" % merged_sequence)
 
