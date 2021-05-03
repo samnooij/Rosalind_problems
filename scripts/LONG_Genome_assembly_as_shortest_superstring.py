@@ -235,36 +235,48 @@ contig : contiguous sequence
             # For each left end and right end,
 
             for name, sequence in seq_dict_copy.items():
-                if sequence.endswith(left_end):
-                    # If another sequence ends with the current
-                    # sequence's left end, there is an overlap
-                    highlight_overlap(sequence, current_sequence, len(left_end))
-                    merged_sequence = current_sequence[len(left_end) :] + sequence
+                # First, check if the overlap part is at least
+                # half as long as the sequences:
+                if (
+                    len(left_end) >= len(sequence) / 2
+                    and len(left_end) >= len(current_sequence) / 2
+                ):
+                    # Left and right should be equally long, so check only one
 
-                    print("New sequence: %s\n" % merged_sequence)
-                    seq_dict_copy.update({name + "-merged": merged_sequence})
-                    return find_overlaps(seq_dict_copy)
-                    # It is assumed there is only one longest match
-                    # in the dataset, so stop looking further.
+                    if sequence.endswith(left_end):
+                        # If another sequence ends with the current
+                        # sequence's left end, there is an overlap
+                        highlight_overlap(sequence, current_sequence, len(left_end))
+                        merged_sequence = current_sequence[len(left_end) :] + sequence
 
-                elif sequence.startswith(right_end):
-                    # And if another sequence ends with the
-                    # current sequence's right end, there is an overap
-                    highlight_overlap(current_sequence, sequence, len(right_end))
-                    merged_sequence = current_sequence[: -len(right_end)] + sequence
+                        print("New sequence: %s\n" % merged_sequence)
+                        seq_dict_copy.update({name + "-merged": merged_sequence})
+                        return find_overlaps(seq_dict_copy)
+                        # It is assumed there is only one longest match
+                        # in the dataset, so stop looking further.
 
-                    print("New sequence: %s\n" % merged_sequence)
-                    seq_dict_copy.update({name + "-merged": merged_sequence})
-                    return find_overlaps(seq_dict_copy)
-                    # It is assumed there is only one longest match
-                    # in the dataset, so stop looking further.
+                    elif sequence.startswith(right_end):
+                        # And if another sequence ends with the
+                        # current sequence's right end, there is an overap
+                        highlight_overlap(current_sequence, sequence, len(right_end))
+                        merged_sequence = current_sequence[: -len(right_end)] + sequence
+
+                        print("New sequence: %s\n" % merged_sequence)
+                        seq_dict_copy.update({name + "-merged": merged_sequence})
+                        return find_overlaps(seq_dict_copy)
+                        # It is assumed there is only one longest match
+                        # in the dataset, so stop looking further.
+
+                    else:
+                        # If the sequence is not a duplicate and has no overlap,
+                        # throw it out (for now):
+                        # print(sorted(list(seq_dict_copy.keys())))
+                        # del seq_dict_copy[name]
+                        merged_sequence = current_sequence
 
                 else:
-                    # If the sequence is not a duplicate and has no overlap,
-                    # throw it out (for now):
-                    # print(sorted(list(seq_dict_copy.keys())))
-                    # del seq_dict_copy[name]
-                    merged_sequence = current_sequence
+                    # If the overlap part is shorter than half a sequence:
+                    pass  # Do not consider this overlap further
 
     seq_dict_copy.update({"merged_sequence": merged_sequence})
 
