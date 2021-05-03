@@ -132,6 +132,7 @@ contig : contiguous sequence
             + longer[start:end]
             + font.reset
             + longer[end:]
+            + "\n"
         )
 
     def highlight_overlap(left, right, length):
@@ -294,7 +295,12 @@ def main():
 
     shortest_supersequence = find_overlaps(sequence_dictionary)
 
-    print("-----\nThe shortest supersequence is:", shortest_supersequence)
+    print(
+        "-----\nThe shortest supersequence is:\n"
+        + font.bold
+        + shortest_supersequence
+        + font.reset
+    )
 
     return 0
 
