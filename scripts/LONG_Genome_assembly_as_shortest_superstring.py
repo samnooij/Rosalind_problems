@@ -2,13 +2,33 @@
 
 # A script to find the shortest superstring (contig) for
 # a number of DNA sequences provided as fasta file.
-# The algorithm works as follows:
-# 1. for each sequence, generate 5' and 3' ends of any length
-# 2. compare 5' ends to 3' ends of other sequences,
-#    and 3' ends to 5' ends of other sequences
-# 3. from all overlaps, select the longest,
-# 4. merge the sequences with the longest overlap into a new sequence (contig)
-# 5. repeat steps 2-4 until no more other sequences exist
+# The algorithm works as follows (pseudocode):
+#
+#    - read sequences from a fasta file, store as dictionary
+#  (1) take out the first element of the dictionary
+#  (2) if there are no other sequences (there is only the first one):
+#        return the sequence
+#  (3) else, if the sequence is identical to any other sequence:
+#        discard the sequence, start from (1)
+#  (4) else, if any other sequence is a substring of the current sequence,
+#      or the current sequence is a substring of any other sequence:
+#        discard the shorter one, start from (1)
+#      else, there are no complete duplicates
+#  (5) for each left or right end of the sequence (from long to short),
+#      (6) check with each other sequence:
+#           (7) if the ends are at least half the sequences' lengths
+#                (8a) if the left end matches:
+#                        merge sequences, remove the other sequence, start from (1)
+#                (8b)  if the right end matches:
+#                        merge the sequences, remove the other sequence, start from (1)
+#                    if neither end matches:
+#                        continue with next (other) sequence
+#                if the overlap is not at least half as long as the sequences:
+#                    continue until no left and right ends are left
+#            (9) if no overlaps can be found:
+#                    put sequence in end of line, start from (1)
+#
+# Numbered steps are labelled in the script as comments.
 
 import argparse  # Reading command-line arguments (input and output files)
 from Bio import SeqIO  # Reading sequences from fasta
@@ -95,11 +115,10 @@ sequence_dictionary : dictionary
 def find_overlaps(seq_dict):
     """
 Given a dictionary with DNA sequences as values,
-return the shortest contig (supersting).
+return the shortest contig (superstring).
 (Assumptions:
  1. There is at least one way to overlap all sequences,
- 2. The overlap is at least one nucleotide from the 5' end 
- and 3' end of two sequences.
+ 2. The overlap is at half of either sequence's length.
  3. The sequences are all in the same orientation (5' to 3')
  )
 
@@ -167,37 +186,41 @@ contig : contiguous sequence
 
     def list_right_ends(sequence):
         """
-        List all possible right (probably 3') ends for a given sequence.
+        List all possible right (probably 3') ends for a given sequence,
+        from long to short.
         """
         return [
             sequence[position : len(sequence)] for position in range(0, len(sequence))
         ]
 
+    print("%s sequences to go!" % len(seq_dict))
+
     seq_dict_copy = seq_dict.copy()
 
+    # (1) Take the first element:
     current_id = list(seq_dict_copy.keys())[0]
     current_sequence = seq_dict_copy.pop(current_id)
 
-    # First, check if there are any other sequences,
+    # (2) If there are no other sequences:
     if len(seq_dict_copy) == 0:
-        # If there are none, return the current sequence
+        # Return the current sequence
         return current_sequence
 
-    # then check if there is a duplicate
+    # (3) If the sequence is identical to any other:
     elif current_sequence in seq_dict_copy.values():
-        # And if there is, restart the process
-        # excluding the duplicate 'current_sequence'
         print("There is a duplicate of %s" % (current_sequence))
 
+        # Start from (1), discarding the current sequence
         return find_overlaps(seq_dict_copy)
 
     else:
+        # (4)
         # If there is no duplicate, continue by looking
         # for duplicates as substrings: is the current sequence
         # a substring of a longer sequence in the dictionary,
         # or is any of the sequences in the dictionary a
         # subsequence of the current sequence?
-        for name, sequence in seq_dict.items():
+        for name, sequence in seq_dict_copy.items():
             if len(sequence) > len(current_sequence):
                 # If the sequence from the dictionary is longer,
                 # current_sequence may be a substring
@@ -205,7 +228,7 @@ contig : contiguous sequence
                     highlight_substring(current_sequence, sequence)
 
                     return find_overlaps(seq_dict_copy)
-                    # Continue without current sequence
+                    # Start from (1) without current sequence
 
             elif len(sequence) < len(current_sequence):
                 # Or if the current sequence is longer,
@@ -216,7 +239,10 @@ contig : contiguous sequence
 
                     del seq_dict_copy[name]  # Remove the shorter sequence
                     seq_dict_copy.update({name + "-deduplicated": current_sequence})
+                    # Add the current sequence back in
+
                     return find_overlaps(seq_dict_copy)
+                    # Start from (1) without the shorter duplicate
 
             else:
                 # If neither is longer, neither can be a substring
@@ -229,57 +255,76 @@ contig : contiguous sequence
         current_left_ends = list_left_ends(current_sequence)
         current_right_ends = list_right_ends(current_sequence)
 
+        # (5) For each left and right end of the sequence
+        # (from long to short).
         for index in range(1, len(current_sequence)):
             left_end = current_left_ends[index]
             right_end = current_right_ends[index]
-            # For each left end and right end,
 
+            # (6) Compare to each other sequence:
             for name, sequence in seq_dict_copy.items():
-                # First, check if the overlap part is at least
+                # (7) If the overlap part is at least
                 # half as long as the sequences:
                 if (
                     len(left_end) >= len(sequence) / 2
                     and len(left_end) >= len(current_sequence) / 2
                 ):
-                    # Left and right should be equally long, so check only one
+                    # Left and right should be equally long, so check only one.
+                    # If the overlap is at least half as long as both sequences,
+                    # continue checking:
 
+                    # (8a) If the left end matches the other sequence:
                     if sequence.endswith(left_end):
-                        # If another sequence ends with the current
-                        # sequence's left end, there is an overlap
                         highlight_overlap(sequence, current_sequence, len(left_end))
                         merged_sequence = current_sequence[len(left_end) :] + sequence
 
                         print("New sequence: %s\n" % merged_sequence)
-                        seq_dict_copy.update({name + "-merged": merged_sequence})
-                        return find_overlaps(seq_dict_copy)
-                        # It is assumed there is only one longest match
-                        # in the dataset, so stop looking further.
 
+                        del seq_dict_copy[name]  # Remove the matched sequence
+
+                        seq_dict_copy.update({name + "-merged": merged_sequence})
+                        # Add the merged sequence back in
+
+                        return find_overlaps(seq_dict_copy)
+                        # Start from (1) with the two sequences merged.
+
+                    # (8b) If the right end matches the other sequence:
                     elif sequence.startswith(right_end):
-                        # And if another sequence ends with the
-                        # current sequence's right end, there is an overap
                         highlight_overlap(current_sequence, sequence, len(right_end))
                         merged_sequence = current_sequence[: -len(right_end)] + sequence
 
                         print("New sequence: %s\n" % merged_sequence)
+
+                        del seq_dict_copy[name]  # Remove the matched sequence
+
                         seq_dict_copy.update({name + "-merged": merged_sequence})
+                        # Add the merged sequence back in
+
                         return find_overlaps(seq_dict_copy)
-                        # It is assumed there is only one longest match
-                        # in the dataset, so stop looking further.
+                        # Start from (1) with the two sequences merged.
 
                     else:
                         # If the sequence is not a duplicate and has no overlap,
-                        # throw it out (for now):
-                        # print(sorted(list(seq_dict_copy.keys())))
-                        # del seq_dict_copy[name]
-                        merged_sequence = current_sequence
+                        # continue with the next sequence.
+                        pass
 
                 else:
                     # If the overlap part is shorter than half a sequence:
-                    pass  # Do not consider this overlap further
+                    pass  # Do not consider these right/left ends further.
 
-    seq_dict_copy.update({"merged_sequence": merged_sequence})
+        # (9) If no overlaps are found:
+        print(
+            "There appears to be no overlap between %s and any other sequence."
+            % current_sequence
+        )
 
+        # Put the sequence back in...
+        print("Retrying with next sequence...")
+        seq_dict_copy.update(
+            {"merged_sequence" + str(len(seq_dict_copy.keys())): current_sequence}
+        )
+
+    # ...and start from (1)
     return find_overlaps(seq_dict_copy)
 
     # When finished, include test cases that also show how the script works:
