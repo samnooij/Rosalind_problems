@@ -15,6 +15,21 @@ from Bio import SeqIO  # Reading sequences from fasta
 from pathlib import Path  # Working with file paths
 
 
+class font:
+    """
+Write print messages with bold and/or coloured letters.
+Reset to normal with 'font.reset'.
+Start print statement with e.g. 'font.bold, font.red'
+to make bold red letters.
+    """
+
+    reset = "\033[0m"
+    bold = "\033[01m"
+    red = "\033[31m"
+    # See more examples at
+    # https://www.geeksforgeeks.org/print-colors-python-terminal/
+
+
 def parse_arguments():
     """
 Parse arguments from the commandline,
@@ -99,6 +114,26 @@ contig : contiguous sequence
   A `str` with shortest overlapping sequence (contig).
     """
 
+    def highlight_substring(shorter, longer):
+        """
+        Print a shorter sequence that is a subsequence
+        of a longer sequence, and highlight the shorter
+        sequence within the longer sequence in bold red.
+        """
+        length = len(shorter)
+        start = longer.index(shorter)
+        end = start + len(shorter)
+
+        print("%s\nis a subsequence of" % shorter)
+        print(
+            longer[:start]
+            + font.bold
+            + font.red
+            + longer[start:end]
+            + font.reset
+            + longer[end:]
+        )
+
     def list_left_ends(sequence):
         """
         List all possible left (probably 5') ends for a given sequence,
@@ -143,7 +178,7 @@ contig : contiguous sequence
                 # If the sequence from the dictionary is longer,
                 # current_sequence may be a substring
                 if current_sequence in sequence:
-                    print("%s is a subsequence of %s" % (current_sequence, sequence))
+                    highlight_substring(current_sequence, sequence)
 
                     return find_overlaps(seq_dict_copy)
                     # Continue without current sequence
@@ -153,7 +188,7 @@ contig : contiguous sequence
                 # the sequence from the dictionary may be
                 # a substring of the current.
                 if sequence in current_sequence:
-                    print("%s is a substring of %s" % (sequence, current_sequence))
+                    highlight_substring(sequence, current_sequence)
 
                     del seq_dict_copy[name]  # Remove the shorter sequence
                     seq_dict_copy.update({"new_sequence": current_sequence})
