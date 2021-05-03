@@ -302,6 +302,15 @@ def main():
         + font.reset
     )
 
+    with open(arguments.output, "w") as results_file:
+        # For a fasta file, add an identifier line
+        if arguments.output.endswith(".fasta"):
+            results_file.write(">Assembled_sequence\n%s\n" % shortest_supersequence)
+
+        else:
+            # Otherwise, write only the sequence as plain text
+            results_file.write("%s\n" % shortest_supersequence)
+
     return 0
 
 
